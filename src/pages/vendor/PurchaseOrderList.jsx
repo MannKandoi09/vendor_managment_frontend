@@ -5,6 +5,10 @@ import vendorPurchaseOrderService from "../../services/vendorPurchaseOrderServic
 import vendorInvoiceService from "../../services/vendorInvoiceService";
 import { toast } from "react-toastify";
 
+// 🚀 IMPORT EXCEL PARSING LIBRARIES
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+
 const PurchaseOrderList = () => {
   const navigate = useNavigate();
 
@@ -14,8 +18,9 @@ const PurchaseOrderList = () => {
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState("");
   
-  // Loader State to track down row-isolated invoice downloading spinner
+  // Loader States to track isolated asynchronous routines
   const [downloadingId, setDownloadingId] = useState(null);
+  const [exporting, setExporting] = useState(false); // 🚀 Staged loading tracking for excel export
 
   // Search and Filter States
   const [searchQuery, setSearchQuery] = useState("");
@@ -48,13 +53,23 @@ const PurchaseOrderList = () => {
 
         const storedUser = localStorage.getItem("currentUser");
         const parsedUser = storedUser ? JSON.parse(storedUser) : null;
-        const vendorId = parsedUser?.vendorId || parsedUser?.id || 8; 
+
+        console.log("Logged Vendor =", parsedUser);
+
+        const vendorId = parsedUser?.vendorId;
+
+        console.log("Vendor ID Sent =", vendorId);
+        console.log("Calling API => /vendor/purchase-orders/" + vendorId);
 
         const data = await vendorPurchaseOrderService.getMyPurchaseOrders(vendorId);
+
+        console.log("Purchase Order API Response =", data);
+
         setPurchaseOrders(Array.isArray(data) ? data : []);
         setFilteredOrders(Array.isArray(data) ? data : []);
+
       } catch (err) {
-        console.error("Failed to load vendor purchase order entries:", err);
+        console.error(err);
         setApiError("Unable to fetch purchase orders profile list from data server.");
       } finally {
         setLoading(false);
@@ -103,6 +118,67 @@ const PurchaseOrderList = () => {
     setDateFilter("");
   };
 
+  // 🚀 HIGH PERFORMANCE ADVANCED EXCEL EXPORT IMPLEMENTATION
+  const handleExportExcel = () => {
+    if (filteredOrders.length === 0) {
+      toast.warning("No data assets available to export under active criteria filters.");
+      return;
+    }
+
+    try {
+      setExporting(true);
+
+      // 1. Structured Column Definition Map Array
+      const worksheetData = filteredOrders.map((order) => ({
+        "PO Number": order.poNumber || "—",
+        "Order Date": formatDate(order.orderDate),
+        "Expected Delivery Date": formatDate(order.expectedDeliveryDate),
+        "Employee": order.employeeName || "—",
+        "Vendor": order.vendorName || "—",
+        "Total Amount": parseFloat(order.amount || 0).toLocaleString("en-IN", {
+          style: "currency",
+          currency: "INR",
+          minimumFractionDigits: 2
+        }),
+        "Status": order.status || "PENDING",
+        "Invoice Status": (order.invoiceStatus || "NOT_CREATED").toUpperCase().replace("_", " ")
+      }));
+
+      // 2. Initialize Worksheet container instance
+      const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Purchase Orders");
+
+      // 3. Dynamic Auto-calculation for Row/Column Auto-size limits
+      const columnsWidths = Object.keys(worksheetData[0]).map((key) => {
+        const maxLength = Math.max(
+          key.length,
+          ...worksheetData.map((row) => (row[key] ? row[key].toString().length : 0))
+        );
+        return { wch: maxLength + 4 }; // Padding clearance buffer
+      });
+      worksheet["!cols"] = columnsWidths;
+
+      // 4. Transform sheets buffers array to file stream
+      const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+      const finalBlob = new Blob([excelBuffer], { type: "application/octet-stream" });
+
+      // Generate accurate timestamp descriptor file string (e.g., Vendor_Purchase_Orders_2026-07-02.xlsx)
+      const currentIsoDate = new Date().toISOString().split("T")[0];
+      const targetFilename = `Vendor_Purchase_Orders_${currentIsoDate}.xlsx`;
+
+      // Trigger automatic background save payload pipeline
+      saveAs(finalBlob, targetFilename);
+      toast.success("Excel report exported successfully.");
+
+    } catch (err) {
+      console.error("Excel mapping workbook compile fault context:", err);
+      toast.error("Unable to export Excel report.");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const getStatusBadgeClass = (status) => {
     const s = (status || "PENDING").toUpperCase();
     if (s === "APPROVED") return "bg-success-subtle text-success border border-success-subtle";
@@ -110,7 +186,7 @@ const PurchaseOrderList = () => {
     return "bg-warning-subtle text-warning border border-warning-subtle";
   };
 
-  // 🚀 FIXED: Exact Invoice Status color badges mapping rules criteria
+  // Exact Invoice Status color badges mapping rules criteria
   const getInvoiceStatusBadgeClass = (status) => {
     const s = (status || "NOT_CREATED").toUpperCase();
     if (s === "APPROVED") return "bg-success-subtle text-success border border-success-subtle"; // Green
@@ -251,9 +327,21 @@ const PurchaseOrderList = () => {
       <div className="card shadow-sm border border-light-subtle rounded-3 overflow-hidden bg-white text-start mb-4">
         <div className="p-3 bg-light border-bottom d-flex justify-content-between align-items-center">
           <span className="text-secondary small fw-semibold">Showing {filteredOrders.length} entries</span>
-          <button className="btn btn-sm btn-outline-success d-flex align-items-center gap-1.5 px-3" style={{ fontSize: "12px", borderRadius: "6px" }}>
-            <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>text_snippet</span>
-            Export Excel
+          
+          {/* 🚀 EXPORT EXCEL INTEGRATED WITH DYNAMIC LOADERS AND DISABLED PROTECTION */}
+          <button 
+            type="button" 
+            disabled={exporting}
+            className="btn btn-sm btn-outline-success d-flex align-items-center gap-1.5 px-3" 
+            onClick={handleExportExcel} 
+            style={{ fontSize: "12px", borderRadius: "6px", transition: "all 0.2s" }}
+          >
+            {exporting ? (
+              <span className="spinner-border spinner-border-sm" role="status" style={{ width: "12px", height: "12px" }}></span>
+            ) : (
+              <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>text_snippet</span>
+            )}
+            {exporting ? "Exporting..." : "Export Excel"}
           </button>
         </div>
 
@@ -284,10 +372,8 @@ const PurchaseOrderList = () => {
               </thead>
               <tbody>
                 {filteredOrders.map((order, idx) => {
-                    console.log("ORDER DATA =>", order);
                   const invStatus = (order.invoiceStatus || "NOT_CREATED").toUpperCase();
                   const isItemDownloading = downloadingId === order.id;
-                  
 
                   return (
                     <tr key={order.id || idx} style={{ borderBottom: "1px solid #f1f5f9" }}>
@@ -311,28 +397,14 @@ const PurchaseOrderList = () => {
                       <td style={{ padding: "14px 16px" }}>
                         <div className="d-flex justify-content-center align-items-center gap-2">
                           
-                          {/* 👁️ View Purchase Order: Eye icon always visible */}
-                          <button 
-                            type="button" 
-                            className="btn btn-sm d-flex align-items-center justify-content-center text-primary rounded-circle border-0" 
-                            title="View details" 
-                            onClick={() => navigate(`/vendor/invoices/view/${order.id}`)}
-                            style={{ width: "32px", height: "32px", backgroundColor: "#eff6ff", transition: "all 0.2s" }}
-                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#dbeafe"}
-                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#eff6ff"}
-                          >
-                            <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>visibility</span>
-                          </button>
-                          
                           {/* 📥 Download Invoice PDF: Hidden only when NOT_CREATED */}
                           {invStatus !== "NOT_CREATED" && (
-                            
                             <button 
                               type="button" 
                               disabled={downloadingId !== null}
                               className="btn btn-sm d-flex align-items-center justify-content-center text-success rounded-circle border-0" 
                               title="Download Invoice PDF" 
-                            onClick={() => handleDownloadInvoice(order.invoiceId)}
+                              onClick={() => handleDownloadInvoice(order.id)} 
                               style={{ width: "32px", height: "32px", backgroundColor: "#f0fdf4", transition: "all 0.2s" }}
                               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#dcfce7"}
                               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#f0fdf4"}
@@ -345,7 +417,7 @@ const PurchaseOrderList = () => {
                             </button>
                           )}
 
-                          {/* 🚀 FIXED: Dynamic Business Actions Matrix */}
+                          {/* Dynamic Business Actions Matrix */}
                           {invStatus === "NOT_CREATED" && (
                             <button 
                               type="button" 

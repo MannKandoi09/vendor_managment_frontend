@@ -21,9 +21,20 @@ const vendorPurchaseOrderService = {
 
   // 🚀 NEW METHOD: Fetch list of purchase orders assigned to the logged-in vendor
   getMyPurchaseOrders: async (vendorId) => {
-    const response = await axios.get(`${BASE_URL}/${vendorId}`, getRequestConfig());
+
+    console.log(
+        "Calling Backend => /vendor/purchase-orders/" + vendorId
+    );
+
+    const response = await axios.get(
+        `${BASE_URL}/${vendorId}`,
+        getRequestConfig()
+    );
+
+    console.log("Backend Response =", response.data);
+
     return response.data?.data || response.data || [];
-  },
+}
 
   
 };

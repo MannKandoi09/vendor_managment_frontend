@@ -44,11 +44,20 @@ import PaymentCreate from "./pages/payment/PaymentCreate";
 import PaymentEdit from "./pages/payment/PaymentEdit";
 import PaymentView from "./pages/payment/PaymentView";
 
-// 🚀 FIXED: Importing unique clean alias component name for vendor side PO view layout screen
+// REGISTERED VENDOR ROUTE MODULE IMPORTS
 import VendorPurchaseOrderList from "./pages/vendor/PurchaseOrderList";
 import VendorViewPurchaseOrder from "./pages/vendor/ViewPurchaseOrder";
 import VendorInvoiceCreate from "./pages/vendor/VendorInvoiceCreate";
 import VendorInvoiceView from "./pages/vendor/VendorInvoiceView";
+import VendorInvoiceEdit from "./pages/vendor/VendorInvoiceEdit";
+import MyInvoiceList from './pages/vendor/MyInvoiceList';
+import MyInvoiceView from "./pages/vendor/MyInvoiceView";
+import ShipmentHistory from "./pages/vendor/ShipmentHistory";
+import ShipmentView from "./pages/vendor/ShipmentView.jsx";
+
+import PaymentHistory from "./pages/vendor/PaymentHistory";
+// 🚀 FIXED ALIAS: Renamed identifier import block to completely eliminate collision conflicts
+import VendorPaymentView from "./pages/vendor/PaymentView";
 
 function App() {
   return (
@@ -101,16 +110,23 @@ function App() {
 
       {/* 🏢 REGISTERED VENDOR ASSIGNED PURCHASE ORDERS ROUTING SECTION */}
       <Route path="/vendor/purchase-orders/list" element={<VendorPurchaseOrderList />} />
+      
       {/* 🏢 INVOICE INBOUND ROUTE SUB-SYSTEM FOR VENDORS */}
-<Route path="/vendor/invoices/create/:purchaseOrderId" element={<VendorInvoiceCreate />} />
-{/* 🏢 INVOICE OUTBOUND DETAILS ROUTE NODE FOR VENDORS */}
-<Route path="/vendor/invoices/view/:purchaseOrderId" element={<VendorInvoiceView />} />
+      <Route path="/vendor/invoices/create/:purchaseOrderId" element={<VendorInvoiceCreate />} />
+      <Route path="/vendor/invoices/view/:purchaseOrderId" element={<VendorInvoiceView />} />
+      <Route path="/vendor/invoices/edit/:purchaseOrderId" element={<VendorInvoiceEdit />} />
+      <Route path="/vendor/invoices/list" element={<MyInvoiceList />} />
+      <Route path="/vendor/invoices/view-by-id/:invoiceId" element={<MyInvoiceView />} />
       
-      
+      {/* 🏢 VENDOR SPECIFIC REMITTANCE PROTECTED PROFILE DETAIL OVERLAYS */}
+      <Route path="/vendor/payments" element={<PaymentHistory />} />
+      {/* 🚀 FIXED: Pointed safely to the unique clean alias wrapper view element */}
+      <Route path="/vendor/payments/view/:paymentId" element={<VendorPaymentView />} />
+      <Route path="/vendor/shipments" element={<ShipmentHistory />} />
+      <Route path="/vendor/shipments/view/:shipmentId" element={<ShipmentView />} />
 
-      {/* 🚀 FIXED ISSUE: Restructured fallback tracking element safely using a clean Navigate tag at the final index level */}
+      {/* Wildcard Fallback tracking element */}
       <Route path="*" element={<Navigate replace to="/login" />} />
-
     </Routes>
   );
 }

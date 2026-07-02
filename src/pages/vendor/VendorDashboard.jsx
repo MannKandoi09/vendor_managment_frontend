@@ -12,6 +12,9 @@ import {
 } from "chart.js";
 
 ChartJS.register(ArcElement, CategoryScale, LinearScale, BarElement, Tooltip, Legend);
+console.log(
+  JSON.parse(localStorage.getItem("currentUser"))
+);
 
 const VendorDashboard = () => {
 

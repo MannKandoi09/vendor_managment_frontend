@@ -45,6 +45,7 @@ const Login = () => {
     if (!validate()) {
       return;
     }
+    
 
     setLoading(true);
     try {
@@ -75,7 +76,7 @@ const Login = () => {
         navigate('/vendor/dashboard');
 
       }
-      
+
       else {
         navigate('/user/dashboard');
       }
@@ -85,6 +86,32 @@ const Login = () => {
     } finally {
       setLoading(false);
     }
+
+    const response = await login({
+    username: form.username.trim(),
+    password: form.password
+});
+
+console.log("Login Response =>", response.data);
+
+localStorage.setItem("token", response.data.token);
+
+localStorage.setItem(
+    "currentUser",
+    JSON.stringify({
+        id: response.data.id,
+        vendorId: response.data.vendorId,
+        name: response.data.name,
+        email: response.data.email,
+        role: response.data.role
+    })
+);
+
+
+console.log(
+    "Current User =>",
+    JSON.parse(localStorage.getItem("currentUser"))
+);
   };
 
   return (

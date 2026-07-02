@@ -36,20 +36,20 @@ const Sidebar = () => {
             Dashboard
           </Link>
           
-          {/* 🚀 FIXED TARGET LINK: Now securely pointing to navigate and open the Purchase Orders system page structure */}
+          {/* Purchase Orders assigned by Admin */}
           <Link className={`nav-item ${isActive("/vendor/purchase-orders")}`} to="/vendor/purchase-orders/list">
             <span className="material-symbols-outlined">shopping_bag</span>
             My Purchase Orders
           </Link>
 
-          {/* Invoices uploaded by this Vendor */}
+          {/* My Invoices module route point */}
           <Link className={`nav-item ${isActive("/vendor/invoices")}`} to="/vendor/invoices/list">
             <span className="material-symbols-outlined">description</span>
             My Invoices
           </Link>
           
           {/* Supply chain dispatch tracking */}
-          <Link className={`nav-item ${isActive("/vendor/deliveries")}`} to="/vendor/deliveries/list">
+          <Link className={`nav-item ${isActive("/vendor/shipments")}`} to="/vendor/shipments">
             <span className="material-symbols-outlined">local_shipping</span>
             Shipments &amp; Delivery
           </Link>
@@ -57,7 +57,7 @@ const Sidebar = () => {
 
         <p className="menu-category-title">FINANCIALS</p>
         <nav className="nav-section">
-          <Link className={`nav-item ${isActive("/vendor/payments")}`} to="/vendor/payments/list">
+          <Link className={`nav-item ${isActive("/vendor/payments")}`} to="/vendor/payments">
             <span className="material-symbols-outlined">payments</span>
             Payment History
           </Link>
@@ -65,20 +65,15 @@ const Sidebar = () => {
 
         <p className="menu-category-title">ACCOUNT SYSTEM</p>
         <nav className="nav-section">
-          <Link className={`nav-item ${isActive("/vendor/profile")}`} to="/vendor/profile">
-            <span className="material-symbols-outlined">account_box</span>
-            Company Profile
-          </Link>
-          
-          <Link className={`nav-item ${isActive("/vendor/settings")}`} to="/vendor/settings">
-            <span className="material-symbols-outlined">settings</span>
-            Settings
-          </Link>
-          
+          {/* 🚀 FIXED: Removed Company Profile and Settings. Logout button is now tailored to perfectly match existing nav-items padding and flex properties */}
           <button 
-            className="nav-item border-0 text-start w-100 bg-transparent" 
+            className="nav-item border-0 text-start w-100 bg-transparent d-flex align-items-center" 
             onClick={handleLogout}
-            style={{ padding: "inherit", cursor: "pointer", outline: "none" }}
+            style={{ 
+              cursor: "pointer", 
+              outline: "none",
+              gap: "12px" /* Aligns icon and text spacing perfectly */
+            }}
           >
             <span className="material-symbols-outlined" style={{ color: "#ef4444" }}>logout</span>
             <span style={{ color: "#ef4444" }}>Logout</span>

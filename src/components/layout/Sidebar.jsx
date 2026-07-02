@@ -43,7 +43,7 @@ const Sidebar = () => {
           </Link>
           
           {/* Purchase Orders Link */}
-          <Link className={`nav-item ${isActive("/admin/purchase-orders")}`} to="/admin/purchase-orders">
+          <Link className={`nav-item ${isActive("/admin/purchase-orders/list")}`} to="/admin/purchase-orders/list ">
             <span className="material-symbols-outlined">shopping_cart</span>
             Purchase Orders
           </Link>
